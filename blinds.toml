@@ -1,0 +1,489 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 3
+
+## Custom Small/Big Blinds
+[[patches]]
+[patches.pattern]
+target = 'functions/common_events.lua'
+pattern = '''G.GAME.round_resets.blind_choices.Boss = get_new_boss()'''
+position = 'before'
+match_indent = true
+payload = '''
+G.GAME.round_resets.blind_choices.Small = get_new_small()
+G.GAME.round_resets.blind_choices.Big = get_new_big()
+'''
+
+##Mr Bones
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+pattern = '''if self.ability.name == 'Mr. Bones' and context.game_over and 
+                G.GAME.chips/G.GAME.blind.chips >= 0.25 then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            G.hand_text_area.blind_chips:juice_up()
+                            G.hand_text_area.game_chips:juice_up()
+                            play_sound('tarot1')
+                            self:start_dissolve()
+                            return true
+                        end
+                    })) 
+                    return {
+                        message = localize('k_saved_ex'),
+                        saved = true,
+                        colour = G.C.RED
+                    }
+                end'''
+position = 'at'
+match_indent = true
+payload = '''if self.ability.name == 'Mr. Bones' and context.game_over and 
+                G.GAME.chips/G.GAME.blind.chips >= 0.25 and not (G.GAME.chips/G.GAME.blind.chips > 1 and (G.GAME.challenge == "Neckro" or G.GAME.modifiers.hah_bones)) then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            G.hand_text_area.blind_chips:juice_up()
+                            G.hand_text_area.game_chips:juice_up()
+                            if not self.eternal then
+                                play_sound('tarot1')
+                                self:start_dissolve()
+                            end
+                            return true
+                        end
+                    })) 
+                    return {
+                        message = localize('k_saved_ex'),
+                        saved = true,
+                        colour = G.C.RED
+                    }
+                end'''
+
+# Bones Mr
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+match_indent = true
+position = 'at'
+pattern = '''j_mr_bones=         {order = 107,  unlocked = false, discovered = false, blueprint_compat = false, perishable_compat = true, eternal_compat = false, rarity = 2, cost = 5, name = "Mr. Bones", pos = {x=3,y=4}, set = "Joker", effect = "Prevent Death", cost_mult = 1.0, config = {},unlock_condition = {type = 'c_losses', extra = 5}},'''
+payload = '''j_mr_bones=         {order = 107,  unlocked = false, discovered = false, blueprint_compat = false, perishable_compat = true, eternal_compat = false, rarity = 2, cost = 5, name = "Mr. Bones", pos = {x=3,y=4}, set = "Joker", effect = "Prevent Death", cost_mult = 1.0, config = {preventValue = 125},unlock_condition = {type = 'c_losses', extra = 5}},'''
+
+[[patches]]
+[patches.pattern]
+target = 'card.lua'
+match_indent = true
+position = 'at'
+pattern = '''elseif self.ability.name == 'Mr. Bones' then'''
+payload = '''elseif self.ability.name == 'Mr. Bones' then loc_vars = {self.ability.preventValue}'''
+
+
+# Add Custom Small/Big Blinds
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+match_indent = true
+position = 'before'
+pattern = '''
+self.GAME.round_resets.blind_choices.Boss = get_new_boss()
+'''
+payload = '''
+self.GAME.round_resets.blind_choices.Small = get_new_small()
+self.GAME.round_resets.blind_choices.Big = get_new_big()
+'''
+
+# Handle defeating custom small/big blinds
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = "G.GAME.round_resets.blind_states.Big = 'Defeated'"
+position = 'after'
+match_indent = true
+payload = '''
+elseif G.GAME.round_resets.blind.small then
+    G.GAME.round_resets.blind_states.Small = 'Defeated'
+elseif G.GAME.round_resets.blind.big then
+    G.GAME.round_resets.blind_states.Big = 'Defeated'
+'''
+# Handle setting new blinds
+[[patches]]
+[patches.pattern]
+target = 'blind.lua'
+match_indent = true
+position = 'after'
+pattern = '''
+self.boss = blind and not not blind.boss
+'''
+payload = '''
+self.small = blind and not not blind.small
+self.big = blind and not not blind.big
+'''
+
+
+
+# Joker Reworks
+# These dont work, actual code in challenges lua
+
+
+# The rare jokers that give mult on hand
+
+# Duo
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{Xmult = 2, type = 'Pair'}"
+position = "at"
+payload = "{Xmult = 3, type = 'Pair'}"
+match_indent = true
+
+# Trio
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{Xmult = 3, type = 'Three of a Kind'}"
+position = "at"
+payload = "{Xmult = 4, type = 'Three of a Kind'}"
+match_indent = true
+
+# Fam
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{Xmult = 4, type = 'Four of a Kind'}"
+position = "at"
+payload = "{Xmult = 5, type = 'Four of a Kind'}"
+match_indent = true
+
+# Gay
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{Xmult = 3, type = 'Straight'}"
+position = "at"
+payload = "{Xmult = 4, type = 'Straight'}"
+match_indent = true
+
+# Toilet
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{Xmult = 2, type = 'Flush'}"
+position = "at"
+payload = "{Xmult = 3, type = 'Flush'}"
+match_indent = true
+
+
+# Other Rare Jokers
+
+
+# Obelisk
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''name = "Obelisk",set = "Joker", config = {extra = 0.2, Xmult = 1}'''
+position = "at"
+payload = '''name = "Obelisk",set = "Joker", config = {extra = 0.25, Xmult = 1}'''
+match_indent = true
+
+# Wee
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''"name = Wee Joker", pos = {x=0,y=0}, set = "Joker", effect = "", config = {extra = {chips = 0, chip_mod = 8}}'''
+position = "at"
+payload = '''name = ""Wee Joker", pos = {x=0,y=0}, set = "Joker", effect = "", config = {extra = {chips = 0, chip_mod = 10}}'''
+match_indent = true
+
+# Stunt
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{extra = {h_size = 2, chip_mod = 250}"
+position = "at"
+payload = "{extra = {h_size = 2, chip_mod = 300}"
+match_indent = true
+
+
+
+# Mechanic Card Stuff
+
+
+# Uncapped Discard limit for merge
+
+# Infinite Deck
+[[patches]]
+[patches.pattern]
+target = "cardarea.lua"
+pattern = "self.config.highlighted_limit = config.highlight_limit or 5"
+position = "at"
+payload = "self.config.highlighted_limit = config.highlight_limit or G.GAME.modifiers.cry_highlight_limit or 5"
+match_indent = true
+
+# Fix not all cards returning to hand on big hands
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "{card_limit = 500, type = 'discard'})"
+position = "at"
+payload = "{card_limit = 1e308, type = 'discard'})"
+match_indent = true
+
+
+
+
+# Adds G.GAME.mechanics_mirrorDeckButNowMechanic
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = "if G.GAME.blind.name == 'The Serpent' and"
+position = "before"
+payload = '''
+if not G.GAME.mechanics_mirrorDeckButNowMechanic_saved_hands then
+    G.GAME.mechanics_mirrorDeckButNowMechanic_saved_hands = 0
+end
+if G.GAME.mechanics_mirrorDeckButNowMechanic and (G.GAME.current_round.hands_played > G.GAME.mechanics_mirrorDeckButNowMechanic_saved_hands) then
+	hand_space = hand_space - 1
+    G.GAME.mechanics_mirrorDeckButNowMechanic_saved_hands = G.GAME.mechanics_mirrorDeckButNowMechanic_saved_hands + 1
+end
+'''
+match_indent = true
+
+
+
+# Calculated Chaos, Prevent hand from being played with less than 5 cards
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''
+    if not self.deck_preview and not G.OVERLAY_MENU and (
+     (self.deck and self.deck.cards[1] and self.deck.cards[1].states.collide.is and ((not self.deck.cards[1].states.drag.is) or self.CONTROLLER.HID.touch) and (not self.CONTROLLER.HID.controller)) or 
+        G.CONTROLLER.held_buttons.triggerleft) then
+'''
+position = "at"
+payload = '''
+    if not self.deck_preview and not G.OVERLAY_MENU and (
+     (self.deck and self.deck.cards[1] and self.deck.cards[1].states.collide.is and ((not self.deck.cards[1].states.drag.is) or self.CONTROLLER.HID.touch) and (not self.CONTROLLER.HID.controller)) or 
+        G.CONTROLLER.held_buttons.triggerleft) and (not G.GAME.modifiers.prevent_deck_preview) then
+'''
+match_indent = true
+
+
+
+
+
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''ease_to = G.GAME.chips + math.floor(hand_chips*mult),'''
+position = 'at'
+match_indent = true
+payload = '''ease_to = G.GAME.blind.config.blind.key == 'bl_ortalab_fork' and not G.GAME.blind.disabled and G.GAME.chips + math.min(math.floor(hand_chips*mult), G.GAME.blind.chips*G.GAME.blind.config.blind.config.extra.cap) or G.GAME.chips + math.floor(hand_chips*mult),'''
+
+[[patches]]
+[patches.pattern]
+target = "card.lua"
+pattern = '''if not self.config.center.discovered and (self.ability.consumeable or self.config.center.unlocked) and not self.config.center.demo and not self.bypass_discovery_center then'''
+position = "before"
+payload = '''
+if self.celadon_disabled and self.area == G.hand then
+    self.children.center:draw_shader('ortalab_celadon', nil, self.ARGS.send_to_shader)
+    if self.children.front then
+        self.children.front:draw_shader('ortalab_celadon', nil, self.ARGS.send_to_shader)
+    end
+end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "cardarea.lua"
+pattern = '''card.T.y = self.T.y + self.T.h/2 - card.T.h/2 - highlight_height + (G.SETTINGS.reduced_motion and 0 or 1)*0.03*math.sin(0.666*G.TIMERS.REAL+card.T.x) + math.abs(0.5*(-#self.cards/2 + k-0.5)/(#self.cards))-0.2'''
+position = "before"
+payload = '''
+if card.celadon_disabled then
+    highlight_height = G.HIGHLIGHT_H * -0.3
+end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = '''{n=G.UIT.O, config={object = DynaText({scale = 0.7, string = localize('ph_unscored_hand'), maxw = 9, colours = {G.C.WHITE},float = true, shadow = true, silent = true, pop_in = 0, pop_in_rate = 6})}},'''
+position = "at"
+payload = '''
+{n=G.UIT.O, config={object = DynaText({scale = 0.7, string = localize(G.GAME.blind.config.blind.key == 'bl_ortalab_spike' and 'ortalab_spike_debuff' or G.GAME.blind.config.blind.key == 'bl_ortalab_fork' and 'ortalab_fork_cap' or 'ph_unscored_hand'), maxw = 9, colours = {G.C.WHITE},float = true, shadow = true, silent = true, pop_in = 0, pop_in_rate = 6})}},
+'''
+match_indent = true
+
+# The Steel
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = '''local nu_chip, nu_mult = G.GAME.selected_back:trigger_effect{context = 'final_scoring_step', chips = hand_chips, mult = mult}'''
+position = "before"
+payload = '''
+if G.GAME.blind.config.blind.key == 'bl_ortalab_steel' and not G.GAME.blind.disabled then
+    local min_value = G.GAME.blind.config.blind:update_score({chips = hand_chips, mult = mult})
+    mult = mod_mult(min_value)
+    hand_chips = mod_chips(min_value)
+end
+'''
+match_indent = true
+
+# blind ingame UI
+[[patches]]
+[patches.pattern]
+target = "blind.lua"
+pattern = '''if obj.loc_vars and type(obj.loc_vars) == 'function' then'''
+position = "before"
+payload = '''
+local loc_key = obj.key
+'''
+match_indent = true
+[[patches]]
+[patches.pattern]
+target = "blind.lua"
+pattern = '''local res = obj:loc_vars() or {}'''
+position = "after"
+payload = '''
+loc_key = res.key or obj.key
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "blind.lua"
+pattern = '''local loc_target = localize{type = 'raw_descriptions', key = self.config.blind.key, set = 'Blind', vars = loc_vars or self.config.blind.vars}'''
+position = "at"
+payload = '''
+local loc_target = localize{type = 'raw_descriptions', key = loc_key, set = 'Blind', vars = loc_vars or vars or self.config.vars}
+'''
+match_indent = true
+
+# blind select UI
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''if obj.loc_vars and _G['type'](obj.loc_vars) == 'function' then'''
+position = "before"
+payload = '''
+local loc_key = obj.key
+'''
+match_indent = true
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''local res = obj:loc_vars() or {}'''
+position = "after"
+payload = '''
+loc_key = res.key or obj.key
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''local loc_target = localize{type = 'raw_descriptions', key = blind_choice.config.key, set = 'Blind', vars = loc_vars or blind_choice.config.vars}'''
+position = "at"
+payload = '''
+local loc_target = localize{type = 'raw_descriptions', key = loc_key, set = 'Blind', vars = loc_vars or vars or blind_choice.config.vars}
+'''
+match_indent = true
+# blind collection UI
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''if blind.collection_loc_vars and type(blind.collection_loc_vars) == 'function' then'''
+position = "before"
+payload = '''
+local loc_key = blind.key
+'''
+match_indent = true
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''local res = blind:collection_loc_vars() or {}'''
+position = "after"
+payload = '''
+loc_key = res.key or blind.key
+'''
+match_indent = true
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = '''local loc_target = localize{type = 'raw_descriptions', key = blind.key, set = 'Blind', vars = loc_vars or vars or blind.vars}'''
+position = "at"
+payload = '''
+local loc_target = localize{type = 'raw_descriptions', key = loc_key, set = 'Blind', vars = loc_vars or vars or blind.vars}
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = '''if G.GAME.blind.name == 'The Serpent' and'''
+position = "before"
+payload = '''
+if G.GAME.blind.config.blind.key == 'bl_ortalab_ladder' and not G.GAME.blind.disabled then
+    G.GAME.blind.config.blind.config.extra.action_count = G.GAME.blind.config.blind.config.extra.action_count + 1
+    if G.GAME.blind.config.blind.config.extra.action_count < 2 then hand_space = 0 else G.GAME.blind.config.blind.config.extra.action_count = 0 end
+end
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = "functions/common_events.lua"
+pattern = '''if v.boss.showdown then '''
+position = "at"
+payload = '''if v.boss and v.boss.showdown then '''
+match_indent = true
+
+## Discard to deck
+[[patches]]
+[patches.pattern]
+target = 'functions/state_events.lua'
+pattern = '''draw_card(G.hand, G.discard, i*100/highlighted_count, 'down', false, G.hand.highlighted[i])'''
+position = 'at'
+match_indent = true
+payload = '''
+if G.hand.highlighted[i].corroded_discard or (G.GAME.blind.config.blind.key == 'bl_ortalab_oil' and not G.GAME.blind.disabled) then
+    draw_card(G.hand, G.deck, i*100/highlighted_count, 'down', false, G.hand.highlighted[i])
+    G.deck:shuffle()
+else
+    draw_card(G.hand, G.discard, i*100/highlighted_count, 'down', false, G.hand.highlighted[i])
+end
+'''
+
+# Rouge Rose
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+match_indent = true
+position = 'before'
+pattern = '''
+self.consumeables = CardArea(
+'''
+payload = '''
+G.Ortalab_old_deck = CardArea(
+    0, 0,
+    G.CARD_W,G.CARD_H,
+    {card_limit = 500, type = 'discard'})
+'''
+
+# Change Rarity of chicot to mythic (from legendary)
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+pattern = '''rarity = 4, cost = 20, name = "Chicot",'''
+position = 'at'
+match_indent = true
+payload = '''rarity = "pogoB_hah_mythic", cost = 15, name = "Chicot",'''
+
+# Change Rarity of blueprint to mythic (from rare)
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+pattern = '''if self.GAME.starting_params.no_faces and (_r == 'K' or _r == 'Q' or _r == 'J') then keep = false end'''
+position = 'before'
+match_indent = true
+payload = '''if self.GAME.starting_params.no_low_ranks and (_r == '2' or _r == '3' or _r == '4' or _r == '5') then keep = false end'''

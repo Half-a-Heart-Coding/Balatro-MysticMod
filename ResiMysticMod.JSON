@@ -1,0 +1,13 @@
+{
+  "id": "ResiMysticMod",
+  "name": "MysticMod",
+  "display_name": "Mystic Mod",
+  "author": [ "HaH" ],
+  "description": "Contains a mystical bag of content",
+  "prefix": "pogoB",
+  "main_file": "MysticMod.lua",
+  "priority": 0,
+  "badge_colour": "8b008b",
+  "version": "1.0.0",
+  "dependencies": [ "Steamodded (>=1.0.0~BETA-0509c)" ]
+}
